@@ -9,7 +9,7 @@ const int height = 4000;
 
 void line(int x0, int y0, int x1, int y1, TGAImage &image, const TGAColor &color)
 {
-    if (x1 == x0)
+    if (x1 == x0 && y1 == y0)
         return;
 
     // transpose
@@ -41,10 +41,10 @@ void line(int x0, int y0, int x1, int y1, TGAImage &image, const TGAColor &color
         {
             image.set(y, x, color);
             error += dy;
-            if (error >= dx)
+            if (error > dx)
             {
-                error -= dx;
                 y += direction;
+                error -= dx * 2;
             }
         }
     }
@@ -54,10 +54,10 @@ void line(int x0, int y0, int x1, int y1, TGAImage &image, const TGAColor &color
         {
             image.set(x, y, color);
             error += dy;
-            if (error >= dx)
+            if (error > dx)
             {
-                error -= dx;
                 y += direction;
+                error -= dx * 2;
             }
         }
     }
