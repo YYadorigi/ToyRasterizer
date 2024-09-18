@@ -102,13 +102,13 @@ public:
     bool flip_horizontally();
     bool flip_vertically();
     bool scale(int w, int h);
-    TGAColor get(int x, int y);
-    bool set(int x, int y, TGAColor c);
+    TGAColor get(int x, int y) const;
+    bool set(int x, int y, const TGAColor &c);
 
-    int get_width();
-    int get_height();
-    int get_bytespp();
-    unsigned char *buffer();
+    int get_width() const;
+    int get_height() const;
+    int get_bytespp() const;
+    unsigned char *buffer() const;
     void clear();
 };
 

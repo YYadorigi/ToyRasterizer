@@ -13,10 +13,10 @@ private:
 public:
     Model(const char *filename);
     ~Model();
-    int num_verts();
-    int num_faces();
-    Vec3f get_vert(int idx);
-    Vec3i get_face_index(int idx);
+    int num_verts() const;
+    int num_faces() const;
+    Vec3f get_vert(int idx) const;
+    Vec3i get_face_index(int idx) const;
 };
 
 #endif //__MODEL_H__

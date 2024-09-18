@@ -47,22 +47,22 @@ Model::~Model()
     ind.clear();
 }
 
-int Model::num_verts()
+int Model::num_verts() const
 {
     return (int)vert.size();
 }
 
-int Model::num_faces()
+int Model::num_faces() const
 {
     return (int)ind.size();
 }
 
-Vec3i Model::get_face_index(int idx)
+Vec3i Model::get_face_index(int idx) const
 {
     return ind[idx];
 }
 
-Vec3f Model::get_vert(int idx)
+Vec3f Model::get_vert(int idx) const
 {
     return vert[idx];
 }

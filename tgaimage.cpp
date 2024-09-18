@@ -430,7 +430,7 @@ bool TGAImage::scale(int w, int h)
     return true;
 }
 
-TGAColor TGAImage::get(int x, int y)
+TGAColor TGAImage::get(int x, int y) const
 {
     if (x < 0 || y < 0 || x >= width || y >= height)
     {
@@ -448,7 +448,7 @@ TGAColor TGAImage::get(int x, int y)
     return res;
 }
 
-bool TGAImage::set(int x, int y, TGAColor c)
+bool TGAImage::set(int x, int y, const TGAColor &c)
 {
     if (x < 0 || y < 0 || x >= width || y >= height)
     {
@@ -465,22 +465,22 @@ bool TGAImage::set(int x, int y, TGAColor c)
     return false;
 }
 
-int TGAImage::get_width()
+int TGAImage::get_width() const
 {
     return width;
 }
 
-int TGAImage::get_height()
+int TGAImage::get_height() const
 {
     return height;
 }
 
-int TGAImage::get_bytespp()
+int TGAImage::get_bytespp() const
 {
     return bytespp;
 }
 
-unsigned char *TGAImage::buffer()
+unsigned char *TGAImage::buffer() const
 {
     return data;
 }
