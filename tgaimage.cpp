@@ -1,8 +1,8 @@
 #include <iostream>
 #include <fstream>
-#include <string.h>
-#include <time.h>
-#include <math.h>
+#include <cstring>
+#include <ctime>
+#include <cmath>
 #include "tgaimage.hpp"
 
 TGAColor::TGAColor(const unsigned char *p, int bpp) : val(0), bytespp(bpp)
@@ -439,7 +439,7 @@ TGAColor TGAImage::get(int x, int y) const
     TGAColor res;
     try
     {
-        res = TGAColor(data[(y * width + x) * bytespp], bytespp);
+        res = TGAColor(data + (y * width + x) * bytespp, bytespp);
     }
     catch (std::exception &e)
     {

@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <cstring>
 
 #pragma pack(push, 1)
 struct TGAHeader
@@ -30,26 +31,18 @@ struct TGAColor
         {
             unsigned char b, g, r, a;
         };
-        unsigned char raw[4];
-        unsigned int val;
+        unsigned char raw[4]; // corresponds to rgba
+        unsigned int val;     // corresponds to rgba
     };
     int bytespp; // bytes per pixel
 
-    TGAColor() : val(0), bytespp(1)
-    {
-    }
+    TGAColor() : val(0), bytespp(1) {}
 
-    TGAColor(unsigned char R, unsigned char G, unsigned char B, unsigned char A) : r(R), g(G), b(B), a(A), bytespp(4)
-    {
-    }
+    TGAColor(unsigned char R, unsigned char G, unsigned char B, unsigned char A) : r(R), g(G), b(B), a(A), bytespp(4) {}
 
-    TGAColor(int v, int bpp) : val(v), bytespp(bpp)
-    {
-    }
+    TGAColor(int v, int bpp) : val(v), bytespp(bpp) {}
 
-    TGAColor(const TGAColor &c) : val(c.val), bytespp(c.bytespp)
-    {
-    }
+    TGAColor(const TGAColor &c) : val(c.val), bytespp(c.bytespp) {}
 
     TGAColor(const unsigned char *p, int bpp);
 
@@ -58,6 +51,25 @@ struct TGAColor
         this->val = c.val;
         this->bytespp = c.bytespp;
         return *this;
+    }
+
+    TGAColor operator+(const TGAColor &c) const
+    {
+        auto adder = [](unsigned char a, unsigned char b)
+        { return a + b > 255 ? 255 : a + b; };
+
+        return TGAColor(adder(r, c.r), adder(g, c.g), adder(b, c.b), a);
+    }
+
+    TGAColor operator*(float intensity) const
+    {
+        return TGAColor(r * intensity, g * intensity, b * intensity, a);
+    }
+
+    friend std::ostream &operator<<(std::ostream &out, const TGAColor &c)
+    {
+        out << "(" << (int)c.r << ", " << (int)c.g << ", " << (int)c.b << ", " << (int)c.a << ")";
+        return out;
     }
 };
 
@@ -70,6 +82,7 @@ protected:
     int bytespp;
 
     bool load_rle_data(std::ifstream &in);
+
     bool unload_rle_data(std::ofstream &out);
 
 public:
@@ -80,9 +93,7 @@ public:
         RGBA = 4
     };
 
-    TGAImage() : data(nullptr), width(0), height(0), bytespp(0)
-    {
-    }
+    TGAImage() : data(nullptr), width(0), height(0), bytespp(0) {}
 
     TGAImage(int w, int h, int bpp) : data(nullptr), width(w), height(h), bytespp(bpp)
     {
@@ -98,17 +109,27 @@ public:
     TGAImage &operator=(const TGAImage &img);
 
     bool read_tga_file(const char *filename);
+
     bool write_tga_file(const char *filename, bool rle = true);
+
     bool flip_horizontally();
+
     bool flip_vertically();
+
     bool scale(int w, int h);
+
     TGAColor get(int x, int y) const;
+
     bool set(int x, int y, const TGAColor &c);
 
     int get_width() const;
+
     int get_height() const;
+
     int get_bytespp() const;
+
     unsigned char *buffer() const;
+
     void clear();
 };
 
