@@ -3,16 +3,17 @@
 
 #include <vector>
 #include <array>
-#include "geometry.hpp"
+#include <Eigen/Dense>
 #include "tgaimage.hpp"
 
 class Model
 {
 private:
-    std::vector<Vec3f> vert;
-    std::vector<Vec3f> text;
-    std::vector<Vec3f> norm;
-    std::vector<std::array<Vec3i, 3>> ind; // indexed triangle mesh (vert, text, norm)
+    std::vector<Eigen::Vector3f> vert;
+    std::vector<Eigen::Vector3f> text;
+    std::vector<Eigen::Vector3f> norm;
+    std::vector<std::array<Eigen::Vector3i, 3>> ind; // indexed triangle mesh (vert, text, norm)
+    std::pair<Eigen::Vector3f, Eigen::Vector3f> bbox;   // bounding box
     TGAImage texture;
 
     void load_texture(std::string filename, const char *suffix);
@@ -26,15 +27,19 @@ public:
 
     int num_faces() const;
 
-    Vec3f get_vert(int idx) const;
+    Eigen::Vector3f get_vert(int idx) const;
 
-    Vec3f get_texture(int idx) const;
+    Eigen::Vector3f get_texture(int idx) const;
 
-    Vec3f get_normal(int idx) const;
+    Eigen::Vector3f get_normal(int idx) const;
 
-    std::array<Vec3i, 3> get_face(int idx) const;
+    std::array<Eigen::Vector3i, 3> get_face(int idx) const;
 
-    TGAColor get_texture(Vec3f uv) const;
+    std::pair<Eigen::Vector3f, Eigen::Vector3f> get_bbox() const;
+
+    TGAColor get_texture(Eigen::Vector3f uv) const;
+
+    void transform(const Eigen::Matrix4f &m);
 };
 
 #endif //__MODEL_H__

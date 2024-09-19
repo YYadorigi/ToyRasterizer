@@ -7,5 +7,9 @@ project(ToyRasterizer)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
 # Add the executable
-add_executable(ToyRasterizer main.cpp tgaimage.hpp tgaimage.cpp geometry.hpp model.hpp model.cpp)
+add_executable(ToyRasterizer main.cpp tgaimage.hpp tgaimage.cpp model.hpp model.cpp)
+
+target_link_libraries(ToyRasterizer Eigen3::Eigen)

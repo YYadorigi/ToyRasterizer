@@ -12,6 +12,9 @@ Model::Model(const char *filename) : vert(), ind()
     if (in.fail())
         return;
 
+    bbox.first = Eigen::Vector3f(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+    bbox.second = Eigen::Vector3f(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
+
     std::string line;
     while (!in.eof())
     {
@@ -21,44 +24,51 @@ Model::Model(const char *filename) : vert(), ind()
         if (!line.compare(0, 2, "v "))
         {
             iss >> trash;
-            Vec3f v;
-            for (int i = 0; i < 3; i++)
-                iss >> v.raw[i];
+            Eigen::Vector3f v;
+            iss >> v.x() >> v.y() >> v.z();
             vert.emplace_back(v);
+
+            // update bounding box
+            bbox.first.x() = std::min(bbox.first.x(), v.x());
+            bbox.first.y() = std::min(bbox.first.y(), v.y());
+            bbox.first.z() = std::min(bbox.first.z(), v.z());
+            bbox.second.x() = std::max(bbox.second.x(), v.x());
+            bbox.second.y() = std::max(bbox.second.y(), v.y());
+            bbox.second.z() = std::max(bbox.second.z(), v.z());
         }
         else if (!line.compare(0, 3, "vt "))
         {
             iss >> trash >> trash;
-            Vec3f vt;
-            for (int i = 0; i < 3; i++)
-                iss >> vt.raw[i];
+            Eigen::Vector3f vt;
+            iss >> vt.x() >> vt.y();
+            vt.z() = 0;
             text.emplace_back(vt);
         }
         else if (!line.compare(0, 3, "vn "))
         {
             iss >> trash >> trash;
-            Vec3f vn;
-            for (int i = 0; i < 3; i++)
-                iss >> vn.raw[i];
+            Eigen::Vector3f vn;
+            iss >> vn.x() >> vn.y() >> vn.z();
             norm.emplace_back(vn);
         }
         else if (!line.compare(0, 2, "f "))
         {
-            Vec3i vert_ind, text_ind, norm_ind;
+            Eigen::Vector3i vert_ind, text_ind, norm_ind;
             int vert_buf, text_buf, norm_buf;
             iss >> trash;
             for (int i = 0; i < 3; i++)
             {
                 iss >> vert_buf >> trash >> text_buf >> trash >> norm_buf;
-                vert_ind.raw[i] = --vert_buf;
-                text_ind.raw[i] = --text_buf;
-                norm_ind.raw[i] = --norm_buf;
+                vert_ind[i] = vert_buf - 1;
+                text_ind[i] = text_buf - 1;
+                norm_ind[i] = norm_buf - 1;
             }
-            ind.emplace_back(std::array<Vec3i, 3>{vert_ind, text_ind, norm_ind});
+            ind.emplace_back(std::array<Eigen::Vector3i, 3>{vert_ind, text_ind, norm_ind});
         }
     }
     load_texture(filename, "_diffuse.tga");
     std::cerr << "# v# " << vert.size() << " f# " << ind.size() << " vt# " << text.size() << " vn# " << norm.size() << std::endl;
+    std::cerr << "bbox min# " << bbox.first.transpose() << " max# " << bbox.second.transpose() << std::endl;
 }
 
 Model::~Model()
@@ -79,10 +89,10 @@ void Model::load_texture(std::string filename, const char *suffix)
     }
 }
 
-TGAColor Model::get_texture(Vec3f uv) const
+TGAColor Model::get_texture(Eigen::Vector3f uv) const
 {
-    int u = uv.x * texture.get_width();
-    int v = uv.y * texture.get_height();
+    int u = uv.x() * texture.get_width();
+    int v = uv.y() * texture.get_height();
     TGAColor color = texture.get(u, v);
     return color;
 }
@@ -97,22 +107,65 @@ int Model::num_faces() const
     return (int)ind.size();
 }
 
-std::array<Vec3i, 3> Model::get_face(int idx) const
+std::array<Eigen::Vector3i, 3> Model::get_face(int idx) const
 {
     return ind[idx];
 }
 
-Vec3f Model::get_vert(int idx) const
+Eigen::Vector3f Model::get_vert(int idx) const
 {
     return vert[idx];
 }
 
-Vec3f Model::get_texture(int idx) const
+Eigen::Vector3f Model::get_texture(int idx) const
 {
     return text[idx];
 }
 
-Vec3f Model::get_normal(int idx) const
+Eigen::Vector3f Model::get_normal(int idx) const
 {
     return norm[idx];
+}
+
+void Model::transform(const Eigen::Matrix4f &m)
+{
+    for (auto &v : vert)
+    {
+        Eigen::Vector4f v4(v.x(), v.y(), v.z(), 1);
+        v4 = m * v4;
+        float w_inv = 1.0f / v4.w();
+        v.x() = v4.x() * w_inv;
+        v.y() = v4.y() * w_inv;
+        v.z() = v4.z() * w_inv;
+    }
+
+    Eigen::Matrix4f m_inv_t = m.transpose().inverse();
+
+    for (auto &n : norm)
+    {
+        Eigen::Vector4f n4(n.x(), n.y(), n.z(), 0);
+        n4 = m_inv_t * n4;
+        n.x() = n4.x();
+        n.y() = n4.y();
+        n.z() = n4.z();
+        n.normalize();
+    }
+
+    // update bounding box
+    bbox.first = Eigen::Vector3f(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+    bbox.second = Eigen::Vector3f(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
+    for (auto &v : vert)
+    {
+        bbox.first.x() = std::min(bbox.first.x(), v.x());
+        bbox.first.y() = std::min(bbox.first.y(), v.y());
+        bbox.first.z() = std::min(bbox.first.z(), v.z());
+        bbox.second.x() = std::max(bbox.second.x(), v.x());
+        bbox.second.y() = std::max(bbox.second.y(), v.y());
+        bbox.second.z() = std::max(bbox.second.z(), v.z());
+    }
+}
+
+std::pair<Eigen::Vector3f, Eigen::Vector3f> Model::get_bbox() const
+{
+    return bbox;
 }
