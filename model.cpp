@@ -56,7 +56,7 @@ Model::Model(const char *filename) : vert(), ind()
             ind.emplace_back(std::array<Eigen::Vector3i, 3>{vert_ind, text_ind, norm_ind});
         }
     }
-    load_texture(filename, "_diffuse.tga");
+    load_texture(filename);
     std::cerr << "# v# " << vert.size() << " f# " << ind.size() << " vt# " << text.size() << " vn# " << norm.size() << std::endl;
 }
 
@@ -66,23 +66,45 @@ Model::~Model()
     ind.clear();
 }
 
-void Model::load_texture(std::string filename, const char *suffix)
+void Model::load_texture(std::string filename)
 {
     std::string texfile(filename);
     size_t dot = texfile.find_last_of(".");
     if (dot != std::string::npos)
     {
-        texfile = texfile.substr(0, dot) + std::string(suffix);
-        std::cerr << "texture file " << texfile << " loading " << (texture.read_tga_file(texfile.c_str()) ? "ok" : "failed") << std::endl;
-        texture.flip_vertically();
+        std::string diffuse = texfile.substr(0, dot) + std::string("_diffuse.tga");
+        std::string specular = texfile.substr(0, dot) + std::string("_spec.tga");
+        std::string tangent_normal = texfile.substr(0, dot) + std::string("_nm.tga");
+        std::cerr << "diffuse texture file " << diffuse << " loading " << (diffuse_texture.read_tga_file(diffuse.c_str()) ? "ok" : "failed") << std::endl;
+        std::cerr << "specular texture file " << specular << " loading " << (specular_texture.read_tga_file(specular.c_str()) ? "ok" : "failed") << std::endl;
+        std::cerr << "normal texture file " << tangent_normal << " loading " << (normal_texture.read_tga_file(tangent_normal.c_str()) ? "ok" : "failed") << std::endl;
+        diffuse_texture.flip_vertically();
+        specular_texture.flip_vertically();
+        normal_texture.flip_vertically();
     }
 }
 
-TGAColor Model::get_texture(Eigen::Vector3f uv) const
+TGAColor Model::get_diffuse(Eigen::Vector3f uv) const
 {
-    int u = uv.x() * texture.get_width();
-    int v = uv.y() * texture.get_height();
-    TGAColor color = texture.get(u, v);
+    int u = uv.x() * diffuse_texture.get_width();
+    int v = uv.y() * diffuse_texture.get_height();
+    TGAColor color = diffuse_texture.get(u, v);
+    return color;
+}
+
+TGAColor Model::get_specular(Eigen::Vector3f uv) const
+{
+    int u = uv.x() * specular_texture.get_width();
+    int v = uv.y() * specular_texture.get_height();
+    TGAColor color = specular_texture.get(u, v);
+    return color;
+}
+
+TGAColor Model::get_normal(Eigen::Vector3f uv) const
+{
+    int u = uv.x() * normal_texture.get_width();
+    int v = uv.y() * normal_texture.get_height();
+    TGAColor color = normal_texture.get(u, v);
     return color;
 }
 
@@ -121,7 +143,7 @@ Eigen::Vector3f Model::get_normal(int idx) const
     return norm[idx];
 }
 
-void Model::transform(const Eigen::Matrix4f &m)
+void Model::transform(const Eigen::Matrix4f &m, bool rigid)
 {
     for (auto &v : vert)
     {
@@ -131,6 +153,19 @@ void Model::transform(const Eigen::Matrix4f &m)
         v.x() = v4.x() * w_inv;
         v.y() = v4.y() * w_inv;
         v.z() = v4.z() * w_inv;
+    }
+
+    if (rigid)
+    {
+        for (auto &v : vert_world_coords)
+        {
+            Eigen::Vector4f v4(v.x(), v.y(), v.z(), 1);
+            v4 = m * v4;
+            float w_inv = 1.0f / v4.w();
+            v.x() = v4.x() * w_inv;
+            v.y() = v4.y() * w_inv;
+            v.z() = v4.z() * w_inv;
+        }
     }
 
     Eigen::Matrix4f m_inv_t = m.transpose().inverse();

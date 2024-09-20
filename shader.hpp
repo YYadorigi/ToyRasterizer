@@ -16,7 +16,8 @@ struct ShadingPoint
 {
     Eigen::Vector3f pos;
     Eigen::Vector3f norm;
-    TGAColor color;
+    TGAColor diffuse_color;
+    TGAColor specular_color;
 };
 
 struct Light
@@ -159,11 +160,13 @@ TGAColor phong_shading(const ShadingPoint &sp, const Light &light, const Camera 
     Eigen::Vector3f normal = sp.norm.normalized();
     Eigen::Vector3f view_dir = (camera.pos - sp.pos).normalized();
 
-    float dist_squared = 1.f / (light.pos - sp.pos).squaredNorm();
-    // float cos_theta = std::max(0.f, normal.dot(light_dir));
-    float cos_theta = 1.f;
-    TGAColor diffuse = sp.color * (light.intensity * cos_theta * dist_squared);
-    return diffuse;
+    float dist_squared_inv = 1.f / (light.pos - sp.pos).squaredNorm();
+    float cos_theta = std::max(0.f, normal.dot(light_dir));
+    TGAColor diffuse = sp.diffuse_color * (light.intensity * cos_theta * dist_squared_inv);
+
+    Eigen::Vector3f half = (light_dir + view_dir).normalized();
+    TGAColor specular = sp.specular_color * (light.intensity * powf(std::max(0.f, normal.dot(half)), 16) * dist_squared_inv);
+    return diffuse + specular;
 }
 
 void triangle(const Triangle &tri, const std::array<Eigen::Vector3f, 3> &vert_in_world, const Light &light, const Camera &camera,
@@ -227,12 +230,19 @@ void triangle(const Triangle &tri, const std::array<Eigen::Vector3f, 3> &vert_in
                     if (z > zbuffer[(v * width + u) * num_samples + i])
                     {
                         Eigen::Vector3f world_coords = a_world * alpha + b_world * beta + c_world * gamma;
-                        Eigen::Vector3f norm = (a_norm * alpha + b_norm * beta + c_norm * gamma).normalized();
                         Eigen::Vector3f uv = a_uv * alpha + b_uv * beta + c_uv * gamma;
-                        TGAColor sub_color = model.get_texture(uv);
+                        TGAColor diffuse_color = model.get_diffuse(uv);
+                        TGAColor specular_color = model.get_specular(uv);
+                        TGAColor normal_color = model.get_normal(uv);
 
-                        ShadingPoint sp = {world_coords, norm, sub_color};
-                        framebuffer[(v * width + u) * num_samples + i] = phong_shading(sp, light, camera);
+                        ShadingPoint sp;
+                        sp.pos = world_coords;
+                        sp.norm = Eigen::Vector3f(normal_color.r, normal_color.g, normal_color.b).normalized();
+                        sp.diffuse_color = diffuse_color;
+                        sp.specular_color = specular_color;
+
+                        TGAColor color = phong_shading(sp, light, camera);
+                        framebuffer[(v * width + u) * num_samples + i] = color;
                         zbuffer[(v * width + u) * num_samples + i] = z;
                     }
                 }

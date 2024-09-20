@@ -14,9 +14,11 @@ private:
     std::vector<Eigen::Vector3f> text;
     std::vector<Eigen::Vector3f> norm;
     std::vector<std::array<Eigen::Vector3i, 3>> ind; // indexed triangle mesh (vert, text, norm)
-    TGAImage texture;
+    TGAImage diffuse_texture;
+    TGAImage specular_texture;
+    TGAImage normal_texture;
 
-    void load_texture(std::string filename, const char *suffix);
+    void load_texture(std::string filename);
 
 public:
     Model(const char *filename);
@@ -37,9 +39,13 @@ public:
 
     std::array<Eigen::Vector3i, 3> get_face(int idx) const;
 
-    TGAColor get_texture(Eigen::Vector3f uv) const;
+    TGAColor get_diffuse(Eigen::Vector3f uv) const;
 
-    void transform(const Eigen::Matrix4f &m);
+    TGAColor get_specular(Eigen::Vector3f uv) const;
+
+    TGAColor get_normal(Eigen::Vector3f uv) const;
+
+    void transform(const Eigen::Matrix4f &m, bool rigid = false);
 };
 
 #endif //__MODEL_H__

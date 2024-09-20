@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     // light
     Light light;
     light.pos = Eigen::Vector3f(0, 10, 10);
-    light.intensity = Eigen::Vector3f(150, 150, 150);
+    light.intensity = Eigen::Vector3f(300, 300, 300);
 
     // frustum
     const float near = -3;
@@ -36,9 +36,11 @@ int main(int argc, char **argv)
     // view transformation
     Eigen::Matrix4f rot = model_transform(Eigen::Vector3f(-1, 1, 0), 0, Eigen::Vector3f(1, 1, 1), Eigen::Vector3f(0, 0, 0));
     Eigen::Matrix4f cam = camera_transform(camera);
+    Eigen::Matrix4f rigid = cam * rot;
     Eigen::Matrix4f persp = perspective_transformation(near, far, fovY, aspect_ratio);
     Eigen::Matrix4f viewport = viewport_transformation(width, height);
-    Eigen::Matrix4f mvp = viewport * persp * cam * rot;
+    Eigen::Matrix4f mvp = viewport * persp;
+    model.transform(rigid, true);
     model.transform(mvp);
 
     // MSAA
