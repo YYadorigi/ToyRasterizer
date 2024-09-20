@@ -180,3 +180,19 @@ void Model::transform(const Eigen::Matrix4f &m, bool rigid)
         n.normalize();
     }
 }
+
+std::pair<Eigen::Vector3f, Eigen::Vector3f> Model::get_world_bounding_box() const
+{
+    Eigen::Vector3f min(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+    Eigen::Vector3f max(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
+    for (auto &v : vert_world_coords)
+    {
+        min.x() = std::min(min.x(), v.x());
+        min.y() = std::min(min.y(), v.y());
+        min.z() = std::min(min.z(), v.z());
+        max.x() = std::max(max.x(), v.x());
+        max.y() = std::max(max.y(), v.y());
+        max.z() = std::max(max.z(), v.z());
+    }
+    return std::make_pair(min, max);
+}

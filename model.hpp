@@ -45,6 +45,8 @@ public:
 
     TGAColor get_normal(Eigen::Vector3f uv) const;
 
+    std::pair<Eigen::Vector3f, Eigen::Vector3f> get_world_bounding_box() const;
+
     void transform(const Eigen::Matrix4f &m, bool rigid = false);
 };
 

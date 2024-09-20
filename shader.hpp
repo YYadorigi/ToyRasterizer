@@ -4,6 +4,8 @@
 
 const TGAColor black = TGAColor(0, 0, 0, 255);
 const TGAColor white = TGAColor(255, 255, 255, 255);
+int theta_ticks = 360;
+int phi_ticks = 180;
 
 struct Camera
 {
@@ -160,17 +162,84 @@ TGAColor phong_shading(const ShadingPoint &sp, const Light &light, const Camera 
     Eigen::Vector3f normal = sp.norm.normalized();
     Eigen::Vector3f view_dir = (camera.pos - sp.pos).normalized();
 
-    float dist_squared_inv = 1.f / (light.pos - sp.pos).squaredNorm();
+    float dist_squared_inv = 1.f / powf((light.pos - sp.pos).norm(), 2);
     float cos_theta = std::max(0.f, normal.dot(light_dir));
     TGAColor diffuse = sp.diffuse_color * (light.intensity * cos_theta * dist_squared_inv);
 
     Eigen::Vector3f half = (light_dir + view_dir).normalized();
     TGAColor specular = sp.specular_color * (light.intensity * powf(std::max(0.f, normal.dot(half)), 16) * dist_squared_inv);
+
     return diffuse + specular;
 }
 
+void shadow_triangle(const std::array<Eigen::Vector3f, 3> &tri_verts, const std::array<Eigen::Vector3f, 3> &vert_world_coords,
+                     const Light &light, const Eigen::Vector2f *sample_bias, const TGAImage &image, float *shadowmap)
+{
+    int width = image.get_width();
+    int height = image.get_height();
+
+    Eigen::Vector3f a = tri_verts[0];
+    Eigen::Vector3f b = tri_verts[1];
+    Eigen::Vector3f c = tri_verts[2];
+
+    PlanarTriangle sub_tri = PlanarTriangle(a.head(2), b.head(2), c.head(2));
+
+    Eigen::Vector3f a_world = vert_world_coords[0];
+    Eigen::Vector3f b_world = vert_world_coords[1];
+    Eigen::Vector3f c_world = vert_world_coords[2];
+
+    int umin, umax, vmin, vmax;
+
+    umin = floorf(std::min(std::min(a.x(), b.x()), c.x()));
+    umax = ceilf(std::max(std::max(a.x(), b.x()), c.x()));
+    vmin = floorf(std::min(std::min(a.y(), b.y()), c.y()));
+    vmax = ceilf(std::max(std::max(a.y(), b.y()), c.y()));
+
+    // clamp
+    umin = std::max(0, umin);
+    umax = std::min(width - 1, umax);
+    vmin = std::max(0, vmin);
+    vmax = std::min(height - 1, vmax);
+
+    int num_samples = sample_bias->size();
+
+    for (int v = vmin; v <= vmax; v++)
+    {
+        for (int u = umin; u <= umax; u++)
+        {
+            for (int i = 0; i < num_samples; i++)
+            {
+                Eigen::Vector2f sub_sample = Eigen::Vector2f(u, v) + sample_bias[i];
+                Eigen::Vector3f barycentric = barycentric_coords(sub_tri, sub_sample);
+
+                if (barycentric.x() >= 0 && barycentric.y() >= 0 && barycentric.z() >= 0)
+                {
+                    float z = 1 / (barycentric.x() / a_world.z() + barycentric.y() / b_world.z() + barycentric.z() / c_world.z());
+                    float alpha = barycentric.x() / a_world.z() * z;
+                    float beta = barycentric.y() / b_world.z() * z;
+                    float gamma = barycentric.z() / c_world.z() * z;
+
+                    Eigen::Vector3f world_coords = a_world * alpha + b_world * beta + c_world * gamma;
+                    Eigen::Vector3f light_dir = (world_coords - light.pos).normalized();
+                    float dist = (world_coords - light.pos).norm();
+
+                    // turn direcction into spherical coordinates
+                    float theta = atan2f(light_dir.x(), light_dir.z());
+                    float phi = acosf(light_dir.y());
+
+                    int theta_tick = (int)floorf((-theta + M_PI) / (2 * M_PI) * theta_ticks + 0.5) % theta_ticks;
+                    int phi_tick = (int)floorf(phi / M_PI * phi_ticks + 0.5) % phi_ticks;
+
+                    if (dist < shadowmap[theta_tick * phi_ticks + phi_tick])
+                        shadowmap[theta_tick * phi_ticks + phi_tick] = dist;
+                }
+            }
+        }
+    }
+}
+
 void triangle(const Triangle &tri, const std::array<Eigen::Vector3f, 3> &vert_in_world, const Light &light, const Camera &camera,
-              const Eigen::Vector2f *sample_bias, const Model &model, TGAImage &image, TGAColor *framebuffer, float *zbuffer)
+              const Eigen::Vector2f *sample_bias, const Model &model, TGAImage &image, TGAColor *framebuffer, float *zbuffer, float *shadowmap)
 {
     int width = image.get_width();
     int height = image.get_height();
@@ -241,8 +310,22 @@ void triangle(const Triangle &tri, const std::array<Eigen::Vector3f, 3> &vert_in
                         sp.diffuse_color = diffuse_color;
                         sp.specular_color = specular_color;
 
+                        // Phong shading
                         TGAColor color = phong_shading(sp, light, camera);
-                        framebuffer[(v * width + u) * num_samples + i] = color;
+
+                        // shadow
+                        Eigen::Vector3f light_dir = (world_coords - light.pos).normalized();
+                        float dist = (world_coords - light.pos).norm();
+
+                        // turn direction into spherical coordinates
+                        float theta = atan2f(light_dir.x(), light_dir.z());
+                        float phi = acosf(light_dir.y());
+
+                        int theta_tick = (int)floorf((-theta + M_PI) / (2 * M_PI) * theta_ticks + 0.5) % theta_ticks;
+                        int phi_tick = (int)floorf(phi / M_PI * phi_ticks + 0.5) % phi_ticks;
+
+                        bool visible = dist < shadowmap[theta_tick * phi_ticks + phi_tick] + 1e-5;
+                        framebuffer[(v * width + u) * num_samples + i] = color * (visible ? 1.f : 1.f);
                         zbuffer[(v * width + u) * num_samples + i] = z;
                     }
                 }

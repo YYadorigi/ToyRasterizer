@@ -4,7 +4,6 @@
 #include "model.hpp"
 #include "shader.hpp"
 
-const float eps = 1e-4;
 const int width = 800;
 const int height = 800;
 
@@ -24,23 +23,26 @@ int main(int argc, char **argv)
 
     // light
     Light light;
-    light.pos = Eigen::Vector3f(0, 10, 10);
-    light.intensity = Eigen::Vector3f(300, 300, 300);
+    light.pos = Eigen::Vector3f(5, 5, 5);
+    light.intensity = Eigen::Vector3f(100, 100, 100);   // RGB
 
     // frustum
     const float near = -3;
     const float far = -7;
-    const float fovY = 25;        // degrees
+    const float fovY = 30;        // degrees
     const float aspect_ratio = 1; // view width / view height
 
     // view transformation
     Eigen::Matrix4f rot = model_transform(Eigen::Vector3f(-1, 1, 0), 0, Eigen::Vector3f(1, 1, 1), Eigen::Vector3f(0, 0, 0));
     Eigen::Matrix4f cam = camera_transform(camera);
     Eigen::Matrix4f rigid = cam * rot;
+    model.transform(rigid, true);
+    light.pos = (rigid * Eigen::Vector4f(light.pos.x(), light.pos.y(), light.pos.z(), 1)).head(3);
+    camera.pos = (rigid * Eigen::Vector4f(camera.pos.x(), camera.pos.y(), camera.pos.z(), 1)).head(3);
+
     Eigen::Matrix4f persp = perspective_transformation(near, far, fovY, aspect_ratio);
     Eigen::Matrix4f viewport = viewport_transformation(width, height);
     Eigen::Matrix4f mvp = viewport * persp;
-    model.transform(rigid, true);
     model.transform(mvp);
 
     // MSAA
@@ -54,10 +56,35 @@ int main(int argc, char **argv)
     float *zbuffer = new float[width * height * 4];
     std::fill(zbuffer, zbuffer + width * height * 4, -std::numeric_limits<float>::max());
 
+    // shadow map
+    float *shadowmap = new float[theta_ticks * phi_ticks];
+    std::fill(shadowmap, shadowmap + theta_ticks * phi_ticks, std::numeric_limits<float>::max());
+
     // rendered image buffer
     TGAColor *framebuffer = new TGAColor[width * height * 4];
     std::fill(framebuffer, framebuffer + width * height * 4, black);
 
+    // build shadow buffer
+    std::cerr << "computing shadow buffer" << std::endl;
+    for (int i = 0; i < model.num_faces(); i++)
+    {
+        std::array<Eigen::Vector3i, 3> face = model.get_face(i);
+        Eigen::Vector3i verts = face[0];
+
+        std::array<Eigen::Vector3f, 3> tri_verts;
+        std::array<Eigen::Vector3f, 3> vert_world_coords;
+
+        for (int j = 0; j < 3; j++)
+        {
+            tri_verts[j] = model.get_vert(verts[j]);
+            vert_world_coords[j] = model.get_vert_world_coords(verts[j]);
+        }
+
+        shadow_triangle(tri_verts, vert_world_coords, light, msaa_bias, image, shadowmap);
+    }
+
+    // render image
+    std::cerr << "rendering image" << std::endl;
     for (int i = 0; i < model.num_faces(); i++)
     {
         std::array<Eigen::Vector3i, 3> face = model.get_face(i);
@@ -76,7 +103,7 @@ int main(int argc, char **argv)
             tri.n[j] = model.get_normal(norms[j]);
         }
 
-        triangle(tri, vert_world_coords, light, camera, msaa_bias, model, image, framebuffer, zbuffer);
+        triangle(tri, vert_world_coords, light, camera, msaa_bias, model, image, framebuffer, zbuffer, shadowmap);
     }
 
     image.flip_vertically();
