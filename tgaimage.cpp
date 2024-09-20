@@ -456,7 +456,7 @@ bool TGAImage::set(int x, int y, const TGAColor &c)
     }
     try
     {
-        memcpy(&data[(y * width + x) * bytespp], (void *)c.raw, (size_t)bytespp);
+        memcpy(data + (y * width + x) * bytespp, (void *)c.raw, (size_t)bytespp);
     }
     catch (std::exception &e)
     {
