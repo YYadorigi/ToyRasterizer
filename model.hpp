@@ -10,10 +10,10 @@ class Model
 {
 private:
     std::vector<Eigen::Vector3f> vert;
+    std::vector<Eigen::Vector3f> vert_world_coords;
     std::vector<Eigen::Vector3f> text;
     std::vector<Eigen::Vector3f> norm;
     std::vector<std::array<Eigen::Vector3i, 3>> ind; // indexed triangle mesh (vert, text, norm)
-    std::pair<Eigen::Vector3f, Eigen::Vector3f> bbox;   // bounding box
     TGAImage texture;
 
     void load_texture(std::string filename, const char *suffix);
@@ -29,13 +29,13 @@ public:
 
     Eigen::Vector3f get_vert(int idx) const;
 
+    Eigen::Vector3f get_vert_world_coords(int idx) const;
+
     Eigen::Vector3f get_texture(int idx) const;
 
     Eigen::Vector3f get_normal(int idx) const;
 
     std::array<Eigen::Vector3i, 3> get_face(int idx) const;
-
-    std::pair<Eigen::Vector3f, Eigen::Vector3f> get_bbox() const;
 
     TGAColor get_texture(Eigen::Vector3f uv) const;
 

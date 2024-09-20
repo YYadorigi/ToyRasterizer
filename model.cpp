@@ -12,9 +12,6 @@ Model::Model(const char *filename) : vert(), ind()
     if (in.fail())
         return;
 
-    bbox.first = Eigen::Vector3f(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
-    bbox.second = Eigen::Vector3f(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
-
     std::string line;
     while (!in.eof())
     {
@@ -27,14 +24,7 @@ Model::Model(const char *filename) : vert(), ind()
             Eigen::Vector3f v;
             iss >> v.x() >> v.y() >> v.z();
             vert.emplace_back(v);
-
-            // update bounding box
-            bbox.first.x() = std::min(bbox.first.x(), v.x());
-            bbox.first.y() = std::min(bbox.first.y(), v.y());
-            bbox.first.z() = std::min(bbox.first.z(), v.z());
-            bbox.second.x() = std::max(bbox.second.x(), v.x());
-            bbox.second.y() = std::max(bbox.second.y(), v.y());
-            bbox.second.z() = std::max(bbox.second.z(), v.z());
+            vert_world_coords.emplace_back(v);
         }
         else if (!line.compare(0, 3, "vt "))
         {
@@ -68,7 +58,6 @@ Model::Model(const char *filename) : vert(), ind()
     }
     load_texture(filename, "_diffuse.tga");
     std::cerr << "# v# " << vert.size() << " f# " << ind.size() << " vt# " << text.size() << " vn# " << norm.size() << std::endl;
-    std::cerr << "bbox min# " << bbox.first.transpose() << " max# " << bbox.second.transpose() << std::endl;
 }
 
 Model::~Model()
@@ -117,6 +106,11 @@ Eigen::Vector3f Model::get_vert(int idx) const
     return vert[idx];
 }
 
+Eigen::Vector3f Model::get_vert_world_coords(int idx) const
+{
+    return vert_world_coords[idx];
+}
+
 Eigen::Vector3f Model::get_texture(int idx) const
 {
     return text[idx];
@@ -150,22 +144,4 @@ void Model::transform(const Eigen::Matrix4f &m)
         n.z() = n4.z();
         n.normalize();
     }
-
-    // update bounding box
-    bbox.first = Eigen::Vector3f(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
-    bbox.second = Eigen::Vector3f(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
-    for (auto &v : vert)
-    {
-        bbox.first.x() = std::min(bbox.first.x(), v.x());
-        bbox.first.y() = std::min(bbox.first.y(), v.y());
-        bbox.first.z() = std::min(bbox.first.z(), v.z());
-        bbox.second.x() = std::max(bbox.second.x(), v.x());
-        bbox.second.y() = std::max(bbox.second.y(), v.y());
-        bbox.second.z() = std::max(bbox.second.z(), v.z());
-    }
-}
-
-std::pair<Eigen::Vector3f, Eigen::Vector3f> Model::get_bbox() const
-{
-    return bbox;
 }

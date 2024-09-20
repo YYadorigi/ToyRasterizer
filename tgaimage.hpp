@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
+#include <Eigen/Dense>
 
 #pragma pack(push, 1)
 struct TGAHeader
@@ -63,7 +64,12 @@ struct TGAColor
 
     TGAColor operator*(float intensity) const
     {
-        return TGAColor(r * intensity + 0.5, g * intensity + 0.5, b * intensity + 0.5, a);
+        return TGAColor(r * intensity + 0.5, g * intensity + 0.5, b * intensity + 0.5, a); // round the float to the nearest integer
+    }
+
+    TGAColor operator*(Eigen::Vector3f intensity) const
+    {
+        return TGAColor(r * intensity.x() + 0.5, g * intensity.y() + 0.5, b * intensity.z() + 0.5, a); // round the float to the nearest integer
     }
 
     friend std::ostream &operator<<(std::ostream &out, const TGAColor &c)
