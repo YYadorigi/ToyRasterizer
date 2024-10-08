@@ -145,9 +145,9 @@ void triangle(const Triangle &tri, const std::array<Eigen::Vector3f, 3> &vert_in
     Eigen::Vector3f b_world = vert_in_world[1];
     Eigen::Vector3f c_world = vert_in_world[2];
 
-    Eigen::Vector3f a_uv = tri.t[0];
-    Eigen::Vector3f b_uv = tri.t[1];
-    Eigen::Vector3f c_uv = tri.t[2];
+    Eigen::Vector2f a_uv = tri.t[0];
+    Eigen::Vector2f b_uv = tri.t[1];
+    Eigen::Vector2f c_uv = tri.t[2];
 
     PlanarTriangle sub_tri = PlanarTriangle(tri.v[0].head(2), tri.v[1].head(2), tri.v[2].head(2));
 
@@ -188,7 +188,7 @@ void triangle(const Triangle &tri, const std::array<Eigen::Vector3f, 3> &vert_in
                     if (z > zbuffer[(v * width + u) * num_samples + i])
                     {
                         Eigen::Vector3f world_coords = a_world * alpha + b_world * beta + c_world * gamma;
-                        Eigen::Vector3f uv = a_uv * alpha + b_uv * beta + c_uv * gamma;
+                        Eigen::Vector2f uv = a_uv * alpha + b_uv * beta + c_uv * gamma;
                         Eigen::Vector3f diffuse = model.get_diffuse(uv);
                         float specular = model.get_specular(uv);
                         Eigen::Vector3f normal = model.get_normal(uv);

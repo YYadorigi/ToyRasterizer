@@ -11,8 +11,7 @@ class Model
 private:
     std::vector<Eigen::Vector3f> vert;
     std::vector<Eigen::Vector3f> vert_world_coords;
-    std::vector<Eigen::Vector3f> text;
-    std::vector<Eigen::Vector3f> norm;
+    std::vector<Eigen::Vector2f> text;
     std::vector<std::pair<Eigen::Vector3i, Eigen::Vector3i>> ind; // indexed triangle mesh (vert, text, norm)
     TGAImage diffuse_texture;
     TGAImage specular_texture;
@@ -33,15 +32,15 @@ public:
 
     Eigen::Vector3f get_vert_world_coords(int idx) const;
 
-    Eigen::Vector3f get_texture(int idx) const;
+    Eigen::Vector2f get_texture(int idx) const;
 
     std::pair<Eigen::Vector3i, Eigen::Vector3i> get_face(int idx) const;
 
-    Eigen::Vector3f get_diffuse(Eigen::Vector3f uv) const;
+    Eigen::Vector3f get_diffuse(Eigen::Vector2f uv) const;
 
-    float get_specular(Eigen::Vector3f uv) const;
+    float get_specular(Eigen::Vector2f uv) const;
 
-    Eigen::Vector3f get_normal(Eigen::Vector3f uv) const;
+    Eigen::Vector3f get_normal(Eigen::Vector2f uv) const;
 
     std::pair<Eigen::Vector3f, Eigen::Vector3f> get_world_bounding_box() const;
 

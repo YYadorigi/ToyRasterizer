@@ -74,12 +74,12 @@ struct PlanarTriangle
 struct Triangle
 {
     Eigen::Vector3f v[3];
-    Eigen::Vector3f t[3];
+    Eigen::Vector2f t[3];
 
     Triangle() = default;
 
     Triangle(Eigen::Vector3f v0, Eigen::Vector3f v1, Eigen::Vector3f v2,
-             Eigen::Vector3f t0, Eigen::Vector3f t1, Eigen::Vector3f t2)
+             Eigen::Vector2f t0, Eigen::Vector2f t1, Eigen::Vector2f t2)
     {
         v[0] = v0;
         v[1] = v1;
@@ -89,7 +89,7 @@ struct Triangle
         t[2] = t2;
     }
 
-    Triangle(Eigen::Vector3f *v, Eigen::Vector3f *t)
+    Triangle(Eigen::Vector3f *v, Eigen::Vector2f *t)
     {
         if (v->size() != 3 || t->size() != 3)
         {

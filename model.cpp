@@ -29,21 +29,17 @@ Model::Model(const char *filename) : vert(), ind()
         else if (!line.compare(0, 3, "vt "))
         {
             iss >> trash >> trash;
-            Eigen::Vector3f vt;
+            Eigen::Vector2f vt;
             iss >> vt.x() >> vt.y();
-            vt.z() = 0;
             text.emplace_back(vt);
         }
         else if (!line.compare(0, 3, "vn "))
         {
-            iss >> trash >> trash;
-            Eigen::Vector3f vn;
-            iss >> vn.x() >> vn.y() >> vn.z();
-            norm.emplace_back(vn);
+            iss >> trash;
         }
         else if (!line.compare(0, 2, "f "))
         {
-            Eigen::Vector3i vert_ind, text_ind, norm_ind;
+            Eigen::Vector3i vert_ind, text_ind;
             int vert_buf, text_buf, norm_buf;
             iss >> trash;
             for (int i = 0; i < 3; i++)
@@ -51,13 +47,12 @@ Model::Model(const char *filename) : vert(), ind()
                 iss >> vert_buf >> trash >> text_buf >> trash >> norm_buf;
                 vert_ind[i] = vert_buf - 1;
                 text_ind[i] = text_buf - 1;
-                norm_ind[i] = norm_buf - 1;
             }
             ind.emplace_back(std::pair<Eigen::Vector3i, Eigen::Vector3i>{vert_ind, text_ind});
         }
     }
     load_texture(filename);
-    std::cerr << "# v# " << vert.size() << " f# " << ind.size() << " vt# " << text.size() << " vn# " << norm.size() << std::endl;
+    std::cerr << "# v# " << vert.size() << " f# " << ind.size() << " vt# " << text.size() << std::endl;
 }
 
 Model::~Model()
@@ -84,32 +79,26 @@ void Model::load_texture(std::string filename)
     }
 }
 
-Eigen::Vector3f Model::get_diffuse(Eigen::Vector3f uv) const
+Eigen::Vector3f Model::get_diffuse(Eigen::Vector2f uv) const
 {
     int u = uv.x() * diffuse_texture.get_width();
     int v = uv.y() * diffuse_texture.get_height();
     TGAColor color = diffuse_texture.get(u, v);
-    Eigen::Vector3f diff_color;
-    diff_color << color.raw[2], color.raw[1], color.raw[0];
-    return diff_color;
+    return color.rgb();
 }
 
-float Model::get_specular(Eigen::Vector3f uv) const
+float Model::get_specular(Eigen::Vector2f uv) const
 {
     int u = uv.x() * specular_texture.get_width();
     int v = uv.y() * specular_texture.get_height();
-    float color = specular_texture.get(u, v).raw[0] / 1.f;
-    return color;
+    return specular_texture.get(u, v).grayscale();
 }
 
-Eigen::Vector3f Model::get_normal(Eigen::Vector3f uv) const
+Eigen::Vector3f Model::get_normal(Eigen::Vector2f uv) const
 {
     int u = uv.x() * normal_texture.get_width();
     int v = uv.y() * normal_texture.get_height();
-    TGAColor color = normal_texture.get(u, v);
-    Eigen::Vector3f normal;
-    normal << color.raw[2], color.raw[1], color.raw[0];
-    return normal.normalized();
+    return normal_texture.get(u, v).rgb().normalized();
 }
 
 int Model::num_verts() const
@@ -137,7 +126,7 @@ Eigen::Vector3f Model::get_vert_world_coords(int idx) const
     return vert_world_coords[idx];
 }
 
-Eigen::Vector3f Model::get_texture(int idx) const
+Eigen::Vector2f Model::get_texture(int idx) const
 {
     return text[idx];
 }
