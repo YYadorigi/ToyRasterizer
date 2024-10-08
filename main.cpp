@@ -23,8 +23,8 @@ int main(int argc, char **argv)
 
     // light
     Light light;
-    light.pos = Eigen::Vector3f(10, 10, 10);
-    light.intensity = Eigen::Vector3f(200, 200, 200); // RGB
+    light.pos = Eigen::Vector3f(8, 8, 8);
+    light.intensity = Eigen::Vector3f(125, 125, 125); // RGB
 
     // frustum
     const float near = 3;         // distance to near plane
@@ -33,13 +33,13 @@ int main(int argc, char **argv)
     const float aspect_ratio = 1; // view width / view height
 
     // view transformation
-    Eigen::Matrix4f rot = model_transform(Eigen::Vector3f(-1, 1, 0), 0, Eigen::Vector3f(1, 1, 1), Eigen::Vector3f(0, 0, 0));
-    Eigen::Matrix4f cam = camera_transform(camera);
+    Eigen::Matrix4f rot = model_transform(Eigen::Vector3f(-1, 1, 0), -15, Eigen::Vector3f(1, 1, 1), Eigen::Vector3f(0, 0, 0));
+    model.transform(rot, true);
 
-    Eigen::Matrix4f rigid = cam * rot;
-    model.transform(rigid, true);
-    light.pos = (rigid * Eigen::Vector4f(light.pos.x(), light.pos.y(), light.pos.z(), 1)).head(3);
-    camera.pos = (rigid * Eigen::Vector4f(camera.pos.x(), camera.pos.y(), camera.pos.z(), 1)).head(3);
+    Eigen::Matrix4f cam = camera_transform(camera);
+    model.transform(cam, true);
+    light.pos = (cam * Eigen::Vector4f(light.pos.x(), light.pos.y(), light.pos.z(), 1)).head(3);
+    camera.pos = (cam * Eigen::Vector4f(camera.pos.x(), camera.pos.y(), camera.pos.z(), 1)).head(3);
 
     Eigen::Matrix4f persp = perspective_transformation(-near, -far, fovY, aspect_ratio);
     Eigen::Matrix4f viewport = viewport_transformation(width, height);
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
             model.get_vert_world_coords(verts.z()),
         };
 
-        triangle(tri, vert_world_coords, light, camera, msaa_bias, model, image, framebuffer, zbuffer);
+        triangle(tri, vert_world_coords, cam * rot, light, camera, msaa_bias, model, image, framebuffer, zbuffer);
     }
 
     image.flip_vertically();

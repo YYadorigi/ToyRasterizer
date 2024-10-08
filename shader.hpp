@@ -131,7 +131,7 @@ TGAColor phong_shading(const ShadingPoint &sp, const Light &light, const Camera 
     return TGAColor(color.x(), color.y(), color.z(), 255);
 }
 
-void triangle(const Triangle &tri, const std::array<Eigen::Vector3f, 3> &vert_in_world, const Light &light, const Camera &camera,
+void triangle(const Triangle &tri, const std::array<Eigen::Vector3f, 3> &vert_in_world, const Eigen::Matrix4f &affine, const Light &light, const Camera &camera,
               const Eigen::Vector2f *sample_bias, const Model &model, TGAImage &image, TGAColor *framebuffer, float *zbuffer)
 {
     int width = image.get_width();
@@ -148,6 +148,8 @@ void triangle(const Triangle &tri, const std::array<Eigen::Vector3f, 3> &vert_in
     Eigen::Vector2f a_uv = tri.t[0];
     Eigen::Vector2f b_uv = tri.t[1];
     Eigen::Vector2f c_uv = tri.t[2];
+
+    Eigen::Matrix4f normal_transform = affine.inverse().transpose();
 
     PlanarTriangle planar_tri = PlanarTriangle(tri.v[0].head(2), tri.v[1].head(2), tri.v[2].head(2));
 
@@ -192,6 +194,7 @@ void triangle(const Triangle &tri, const std::array<Eigen::Vector3f, 3> &vert_in
                         Eigen::Vector3f diffuse = model.get_diffuse(uv);
                         float specular = model.get_specular(uv);
                         Eigen::Vector3f normal = model.get_normal(uv);
+                        normal = (normal_transform * Eigen::Vector4f(normal.x(), normal.y(), normal.z(), 0)).head(3); // normal transformation
 
                         ShadingPoint sp{
                             world_coords,
