@@ -39,6 +39,8 @@ struct TGAColor
 
     TGAColor() : val(0), bytespp(1) {}
 
+    TGAColor(unsigned char R, unsigned char G, unsigned char B) : r(R), g(G), b(B), a(255), bytespp(3) {}
+
     TGAColor(unsigned char R, unsigned char G, unsigned char B, unsigned char A) : r(R), g(G), b(B), a(A), bytespp(4) {}
 
     TGAColor(int v, int bpp) : val(v), bytespp(bpp) {}
@@ -70,6 +72,21 @@ struct TGAColor
     TGAColor operator*(Eigen::Vector3f intensity) const
     {
         return TGAColor(r * intensity.x() + 0.5, g * intensity.y() + 0.5, b * intensity.z() + 0.5, a); // round the float to the nearest integer
+    }
+
+    Eigen::Vector4f rgba() const
+    {
+        return Eigen::Vector4f(r, g, b, a);
+    }
+
+    Eigen::Vector3f rgb() const
+    {
+        return Eigen::Vector3f(r, g, b);
+    }
+
+    float grayscale() const
+    {
+        return (float)raw[0];
     }
 
     friend std::ostream &operator<<(std::ostream &out, const TGAColor &c)

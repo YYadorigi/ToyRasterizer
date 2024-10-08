@@ -112,48 +112,6 @@ Eigen::Matrix4f viewport_transformation(int width, int height)
     return viewport;
 }
 
-bool inside_triangle(const PlanarTriangle &tri, const Eigen::Vector2f &p)
-{
-    Eigen::Vector2f a = tri.v[0];
-    Eigen::Vector2f b = tri.v[1];
-    Eigen::Vector2f c = tri.v[2];
-
-    auto converter = [](Eigen::Vector2f a, Eigen::Vector2f b)
-    { return Eigen::Vector3f((b - a).x(), (b - a).y(), 0); };
-
-    Eigen::Vector3f ab = converter(a, b);
-    Eigen::Vector3f bc = converter(b, c);
-    Eigen::Vector3f ca = converter(c, a);
-    Eigen::Vector3f ap = converter(a, p);
-    Eigen::Vector3f bp = converter(b, p);
-    Eigen::Vector3f cp = converter(c, p);
-
-    return (ab.cross(ap).z() >= 0 && bc.cross(bp).z() >= 0 && ca.cross(cp).z() >= 0) ||
-           (ab.cross(ap).z() <= 0 && bc.cross(bp).z() <= 0 && ca.cross(cp).z() <= 0);
-}
-
-Eigen::Vector3f barycentric_coords(const PlanarTriangle &tri, const Eigen::Vector2f &p)
-{
-    Eigen::Vector2f a = tri.v[0];
-    Eigen::Vector2f b = tri.v[1];
-    Eigen::Vector2f c = tri.v[2];
-
-    float alpha, beta, gamma;
-    try
-    {
-        alpha = (-(p.x() - b.x()) * (c.y() - b.y()) + (p.y() - b.y()) * (c.x() - b.x())) * 1.0 /
-                (-(a.x() - b.x()) * (c.y() - b.y()) + (a.y() - b.y()) * (c.x() - b.x()));
-        beta = (-(p.x() - c.x()) * (a.y() - c.y()) + (p.y() - c.y()) * (a.x() - c.x())) * 1.0 /
-               (-(b.x() - c.x()) * (a.y() - c.y()) + (b.y() - c.y()) * (a.x() - c.x()));
-        gamma = 1.f - alpha - beta;
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << e.what() << std::endl;
-    }
-    return Eigen::Vector3f(alpha, beta, gamma);
-}
-
 TGAColor phong_shading(const ShadingPoint &sp, const Light &light, const Camera &camera)
 {
     Eigen::Vector3f light_dir = (light.pos - sp.pos).normalized();
@@ -171,19 +129,6 @@ TGAColor phong_shading(const ShadingPoint &sp, const Light &light, const Camera 
     Eigen::Vector3f specular = sp.specular * (light.intensity * powf(std::max(0.f, normal.dot(half)), 16) * dist_squared_inv);
     Eigen::Vector3f color = diffuse + specular;
     return TGAColor(color.x(), color.y(), color.z(), 255);
-}
-
-float bilinear(std::pair<int, int> x_coords, std::pair<int, int> y_coords,
-               std::pair<float, float> pos, float *metrics)
-{
-    // bilinear interpolation
-    // in order of (0,0), (1,0), (0,1), (1,1)
-    float alpha = x_coords.second - pos.first;
-    float beta = y_coords.second - pos.second;
-    float dist_alpha_1 = metrics[0] * alpha + metrics[1] * (1 - alpha);
-    float dist_alpha_2 = metrics[2] * alpha + metrics[3] * (1 - alpha);
-    float bilinear_metric = dist_alpha_1 * beta + dist_alpha_2 * (1 - beta);
-    return bilinear_metric;
 }
 
 void triangle(const Triangle &tri, const std::array<Eigen::Vector3f, 3> &vert_in_world, const Light &light, const Camera &camera,
@@ -229,7 +174,7 @@ void triangle(const Triangle &tri, const std::array<Eigen::Vector3f, 3> &vert_in
             for (int i = 0; i < num_samples; i++)
             {
                 Eigen::Vector2f sub_sample = Eigen::Vector2f(u, v) + sample_bias[i];
-                Eigen::Vector3f barycentric = barycentric_coords(sub_tri, sub_sample);
+                Eigen::Vector3f barycentric = sub_tri.barycentric_coords(sub_sample);
 
                 if (barycentric.x() >= 0 && barycentric.y() >= 0 && barycentric.z() >= 0)
                 {

@@ -77,7 +77,6 @@ int main(int argc, char **argv)
             tri.v[j] = model.get_vert(verts[j]);
             vert_world_coords[j] = model.get_vert_world_coords(verts[j]);
             tri.t[j] = model.get_texture(texts[j]);
-            tri.n[j] = model.get_normal(norms[j]);
         }
 
         triangle(tri, vert_world_coords, light, camera, msaa_bias, model, image, framebuffer, zbuffer);
