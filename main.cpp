@@ -64,10 +64,9 @@ int main(int argc, char **argv)
     std::cerr << "rendering image" << std::endl;
     for (int i = 0; i < model.num_faces(); i++)
     {
-        std::array<Eigen::Vector3i, 3> face = model.get_face(i);
-        Eigen::Vector3i verts = face[0];
-        Eigen::Vector3i texts = face[1];
-        Eigen::Vector3i norms = face[2];
+        std::pair<Eigen::Vector3i, Eigen::Vector3i> face = model.get_face(i);
+        Eigen::Vector3i verts = face.first;
+        Eigen::Vector3i texts = face.second;
 
         Triangle tri;
         std::array<Eigen::Vector3f, 3> vert_world_coords;

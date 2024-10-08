@@ -13,7 +13,7 @@ private:
     std::vector<Eigen::Vector3f> vert_world_coords;
     std::vector<Eigen::Vector3f> text;
     std::vector<Eigen::Vector3f> norm;
-    std::vector<std::array<Eigen::Vector3i, 3>> ind; // indexed triangle mesh (vert, text, norm)
+    std::vector<std::pair<Eigen::Vector3i, Eigen::Vector3i>> ind; // indexed triangle mesh (vert, text, norm)
     TGAImage diffuse_texture;
     TGAImage specular_texture;
     TGAImage normal_texture;
@@ -35,9 +35,7 @@ public:
 
     Eigen::Vector3f get_texture(int idx) const;
 
-    Eigen::Vector3f get_normal(int idx) const;
-
-    std::array<Eigen::Vector3i, 3> get_face(int idx) const;
+    std::pair<Eigen::Vector3i, Eigen::Vector3i> get_face(int idx) const;
 
     Eigen::Vector3f get_diffuse(Eigen::Vector3f uv) const;
 

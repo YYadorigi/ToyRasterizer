@@ -53,7 +53,7 @@ Model::Model(const char *filename) : vert(), ind()
                 text_ind[i] = text_buf - 1;
                 norm_ind[i] = norm_buf - 1;
             }
-            ind.emplace_back(std::array<Eigen::Vector3i, 3>{vert_ind, text_ind, norm_ind});
+            ind.emplace_back(std::pair<Eigen::Vector3i, Eigen::Vector3i>{vert_ind, text_ind});
         }
     }
     load_texture(filename);
@@ -122,7 +122,7 @@ int Model::num_faces() const
     return (int)ind.size();
 }
 
-std::array<Eigen::Vector3i, 3> Model::get_face(int idx) const
+std::pair<Eigen::Vector3i, Eigen::Vector3i> Model::get_face(int idx) const
 {
     return ind[idx];
 }
@@ -140,11 +140,6 @@ Eigen::Vector3f Model::get_vert_world_coords(int idx) const
 Eigen::Vector3f Model::get_texture(int idx) const
 {
     return text[idx];
-}
-
-Eigen::Vector3f Model::get_normal(int idx) const
-{
-    return norm[idx].normalized();
 }
 
 void Model::transform(const Eigen::Matrix4f &m, bool rigid)
