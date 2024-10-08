@@ -149,14 +149,14 @@ void triangle(const Triangle &tri, const std::array<Eigen::Vector3f, 3> &vert_in
     Eigen::Vector2f b_uv = tri.t[1];
     Eigen::Vector2f c_uv = tri.t[2];
 
-    PlanarTriangle sub_tri = PlanarTriangle(tri.v[0].head(2), tri.v[1].head(2), tri.v[2].head(2));
+    PlanarTriangle planar_tri = PlanarTriangle(tri.v[0].head(2), tri.v[1].head(2), tri.v[2].head(2));
 
     int umin, umax, vmin, vmax;
 
-    umin = floorf(std::min(std::min(a.x(), b.x()), c.x()));
-    umax = ceilf(std::max(std::max(a.x(), b.x()), c.x()));
-    vmin = floorf(std::min(std::min(a.y(), b.y()), c.y()));
-    vmax = ceilf(std::max(std::max(a.y(), b.y()), c.y()));
+    umin = (int)floorf(std::min(std::min(a.x(), b.x()), c.x()));
+    umax = (int)ceilf(std::max(std::max(a.x(), b.x()), c.x()));
+    vmin = (int)floorf(std::min(std::min(a.y(), b.y()), c.y()));
+    vmax = (int)ceilf(std::max(std::max(a.y(), b.y()), c.y()));
 
     // clamp
     umin = std::max(0, umin);
@@ -174,7 +174,7 @@ void triangle(const Triangle &tri, const std::array<Eigen::Vector3f, 3> &vert_in
             for (int i = 0; i < num_samples; i++)
             {
                 Eigen::Vector2f sub_sample = Eigen::Vector2f(u, v) + sample_bias[i];
-                Eigen::Vector3f barycentric = sub_tri.barycentric_coords(sub_sample);
+                Eigen::Vector3f barycentric = planar_tri.barycentric_coords(sub_sample);
 
                 if (barycentric.x() >= 0 && barycentric.y() >= 0 && barycentric.z() >= 0)
                 {

@@ -79,28 +79,6 @@ void Model::load_texture(std::string filename)
     }
 }
 
-Eigen::Vector3f Model::get_diffuse(Eigen::Vector2f uv) const
-{
-    int u = uv.x() * diffuse_texture.get_width();
-    int v = uv.y() * diffuse_texture.get_height();
-    TGAColor color = diffuse_texture.get(u, v);
-    return color.rgb();
-}
-
-float Model::get_specular(Eigen::Vector2f uv) const
-{
-    int u = uv.x() * specular_texture.get_width();
-    int v = uv.y() * specular_texture.get_height();
-    return specular_texture.get(u, v).grayscale();
-}
-
-Eigen::Vector3f Model::get_normal(Eigen::Vector2f uv) const
-{
-    int u = uv.x() * normal_texture.get_width();
-    int v = uv.y() * normal_texture.get_height();
-    return normal_texture.get(u, v).rgb().normalized();
-}
-
 int Model::num_verts() const
 {
     return (int)vert.size();
@@ -131,6 +109,28 @@ Eigen::Vector2f Model::get_texture(int idx) const
     return text[idx];
 }
 
+Eigen::Vector3f Model::get_diffuse(Eigen::Vector2f uv) const
+{
+    int u = uv.x() * diffuse_texture.get_width();
+    int v = uv.y() * diffuse_texture.get_height();
+    TGAColor color = diffuse_texture.get(u, v);
+    return color.rgb();
+}
+
+float Model::get_specular(Eigen::Vector2f uv) const
+{
+    int u = uv.x() * specular_texture.get_width();
+    int v = uv.y() * specular_texture.get_height();
+    return specular_texture.get(u, v).grayscale();
+}
+
+Eigen::Vector3f Model::get_normal(Eigen::Vector2f uv) const
+{
+    int u = uv.x() * normal_texture.get_width();
+    int v = uv.y() * normal_texture.get_height();
+    return normal_texture.get(u, v).rgb().normalized();
+}
+
 void Model::transform(const Eigen::Matrix4f &m, bool rigid)
 {
     for (auto &v : vert)
@@ -155,20 +155,4 @@ void Model::transform(const Eigen::Matrix4f &m, bool rigid)
             v.z() = v4.z() * w_inv;
         }
     }
-}
-
-std::pair<Eigen::Vector3f, Eigen::Vector3f> Model::get_world_bounding_box() const
-{
-    Eigen::Vector3f min(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
-    Eigen::Vector3f max(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
-    for (auto &v : vert_world_coords)
-    {
-        min.x() = std::min(min.x(), v.x());
-        min.y() = std::min(min.y(), v.y());
-        min.z() = std::min(min.z(), v.z());
-        max.x() = std::max(max.x(), v.x());
-        max.y() = std::max(max.y(), v.y());
-        max.z() = std::max(max.z(), v.z());
-    }
-    return std::make_pair(min, max);
 }
