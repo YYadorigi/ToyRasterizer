@@ -39,11 +39,11 @@ public:
 
     std::array<Eigen::Vector3i, 3> get_face(int idx) const;
 
-    TGAColor get_diffuse(Eigen::Vector3f uv) const;
+    Eigen::Vector3f get_diffuse(Eigen::Vector3f uv) const;
 
-    TGAColor get_specular(Eigen::Vector3f uv) const;
+    float get_specular(Eigen::Vector3f uv) const;
 
-    TGAColor get_normal(Eigen::Vector3f uv) const;
+    Eigen::Vector3f get_normal(Eigen::Vector3f uv) const;
 
     std::pair<Eigen::Vector3f, Eigen::Vector3f> get_world_bounding_box() const;
 

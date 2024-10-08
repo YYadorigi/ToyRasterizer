@@ -84,28 +84,32 @@ void Model::load_texture(std::string filename)
     }
 }
 
-TGAColor Model::get_diffuse(Eigen::Vector3f uv) const
+Eigen::Vector3f Model::get_diffuse(Eigen::Vector3f uv) const
 {
     int u = uv.x() * diffuse_texture.get_width();
     int v = uv.y() * diffuse_texture.get_height();
     TGAColor color = diffuse_texture.get(u, v);
-    return color;
+    Eigen::Vector3f diff_color;
+    diff_color << color.raw[2], color.raw[1], color.raw[0];
+    return diff_color;
 }
 
-TGAColor Model::get_specular(Eigen::Vector3f uv) const
+float Model::get_specular(Eigen::Vector3f uv) const
 {
     int u = uv.x() * specular_texture.get_width();
     int v = uv.y() * specular_texture.get_height();
-    TGAColor color = specular_texture.get(u, v);
+    float color = specular_texture.get(u, v).raw[0] / 1.f;
     return color;
 }
 
-TGAColor Model::get_normal(Eigen::Vector3f uv) const
+Eigen::Vector3f Model::get_normal(Eigen::Vector3f uv) const
 {
     int u = uv.x() * normal_texture.get_width();
     int v = uv.y() * normal_texture.get_height();
     TGAColor color = normal_texture.get(u, v);
-    return color;
+    Eigen::Vector3f normal;
+    normal << color.raw[2], color.raw[1], color.raw[0];
+    return normal.normalized();
 }
 
 int Model::num_verts() const
@@ -140,7 +144,7 @@ Eigen::Vector3f Model::get_texture(int idx) const
 
 Eigen::Vector3f Model::get_normal(int idx) const
 {
-    return norm[idx];
+    return norm[idx].normalized();
 }
 
 void Model::transform(const Eigen::Matrix4f &m, bool rigid)
@@ -166,18 +170,6 @@ void Model::transform(const Eigen::Matrix4f &m, bool rigid)
             v.y() = v4.y() * w_inv;
             v.z() = v4.z() * w_inv;
         }
-    }
-
-    Eigen::Matrix4f m_inv_t = m.transpose().inverse();
-
-    for (auto &n : norm)
-    {
-        Eigen::Vector4f n4(n.x(), n.y(), n.z(), 0);
-        n4 = m_inv_t * n4;
-        n.x() = n4.x();
-        n.y() = n4.y();
-        n.z() = n4.z();
-        n.normalize();
     }
 }
 

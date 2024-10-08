@@ -4,8 +4,8 @@
 #include "model.hpp"
 #include "shader.hpp"
 
-const int width = 800;
-const int height = 800;
+const int width = 1080;
+const int height = 1080;
 
 int main(int argc, char **argv)
 {
@@ -13,7 +13,7 @@ int main(int argc, char **argv)
     TGAImage image(width, height, TGAImage::RGB);
 
     // load model and its texture
-    Model model("../objects/diablo3_pose.obj");
+    Model model("../objects/african_head.obj");
 
     // camera
     Camera camera;
@@ -23,8 +23,8 @@ int main(int argc, char **argv)
 
     // light
     Light light;
-    light.pos = Eigen::Vector3f(5, 5, 5);
-    light.intensity = Eigen::Vector3f(100, 100, 100);   // RGB
+    light.pos = Eigen::Vector3f(10, 10, 10);
+    light.intensity = Eigen::Vector3f(200, 200, 200); // RGB
 
     // frustum
     const float near = -3;
@@ -56,32 +56,9 @@ int main(int argc, char **argv)
     float *zbuffer = new float[width * height * 4];
     std::fill(zbuffer, zbuffer + width * height * 4, -std::numeric_limits<float>::max());
 
-    // shadow map
-    float *shadowmap = new float[theta_ticks * phi_ticks];
-    std::fill(shadowmap, shadowmap + theta_ticks * phi_ticks, std::numeric_limits<float>::max());
-
     // rendered image buffer
     TGAColor *framebuffer = new TGAColor[width * height * 4];
     std::fill(framebuffer, framebuffer + width * height * 4, black);
-
-    // build shadow buffer
-    std::cerr << "computing shadow buffer" << std::endl;
-    for (int i = 0; i < model.num_faces(); i++)
-    {
-        std::array<Eigen::Vector3i, 3> face = model.get_face(i);
-        Eigen::Vector3i verts = face[0];
-
-        std::array<Eigen::Vector3f, 3> tri_verts;
-        std::array<Eigen::Vector3f, 3> vert_world_coords;
-
-        for (int j = 0; j < 3; j++)
-        {
-            tri_verts[j] = model.get_vert(verts[j]);
-            vert_world_coords[j] = model.get_vert_world_coords(verts[j]);
-        }
-
-        shadow_triangle(tri_verts, vert_world_coords, light, msaa_bias, image, shadowmap);
-    }
 
     // render image
     std::cerr << "rendering image" << std::endl;
@@ -103,7 +80,7 @@ int main(int argc, char **argv)
             tri.n[j] = model.get_normal(norms[j]);
         }
 
-        triangle(tri, vert_world_coords, light, camera, msaa_bias, model, image, framebuffer, zbuffer, shadowmap);
+        triangle(tri, vert_world_coords, light, camera, msaa_bias, model, image, framebuffer, zbuffer);
     }
 
     image.flip_vertically();
