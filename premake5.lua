@@ -15,8 +15,6 @@ project "ToyRasterizer"
 	files {
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
-		"%{prj.name}/src/assets/*",
-		"%{prj.name}/src/outputs/*",
 	}
 
 	includedirs {
@@ -29,9 +27,10 @@ project "ToyRasterizer"
 	}
 
 	postbuildcommands {
-		-- ("{MKDIR} ../bin/" .. outputdir .. "/%{prj.name}/src"),
-		-- ("{MKDIR} ../bin/" .. outputdir .. "/%{prj.name}/src/textures"),
-		-- ("{COPYFILE} src/textures ../bin/" .. outputdir .. "/%{prj.name}/src/textures/"),
+		("{MKDIR} ../bin/" .. outputdir .. "/%{prj.name}/src"),
+		("{MKDIR} ../bin/" .. outputdir .. "/%{prj.name}/src/assets"),
+		("{MKDIR} ../bin/" .. outputdir .. "/%{prj.name}/src/outputs"),
+		("{COPYFILE} src/assets ../bin/" .. outputdir .. "/%{prj.name}/src/assets/"),
 	}
 
 	filter "system:linux"
