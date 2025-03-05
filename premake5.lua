@@ -13,13 +13,13 @@ project "ToyRasterizer"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 
 	files {
-		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/**.h",
+		"%{prj.name}/**.cpp",
 	}
 
 	includedirs {
-		"%{prj.name}/src",
-		"%{prj.name}/third-party",
+		"%{prj.name}",
+		"vendor",
 	}
 
 	buildoptions {
@@ -27,10 +27,9 @@ project "ToyRasterizer"
 	}
 
 	postbuildcommands {
-		("{MKDIR} ../bin/" .. outputdir .. "/%{prj.name}/src"),
-		("{MKDIR} ../bin/" .. outputdir .. "/%{prj.name}/src/assets"),
-		("{MKDIR} ../bin/" .. outputdir .. "/%{prj.name}/src/outputs"),
-		("{COPYFILE} src/assets ../bin/" .. outputdir .. "/%{prj.name}/src/assets/"),
+		("{MKDIR} ../bin/" .. outputdir .. "/%{prj.name}/outputs"),
+		("{MKDIR} ../bin/" .. outputdir .. "/%{prj.name}/assets"),
+		("{COPYDIR} assets ../bin/" .. outputdir .. "/%{prj.name}/assets"),
 	}
 
 	filter "system:linux"

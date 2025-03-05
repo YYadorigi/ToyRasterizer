@@ -13,7 +13,7 @@ int main(int argc, char** argv)
 	TGAImage image(width, height, TGAImage::RGB);
 
 	// load model and its texture
-	Model model("src/assets/african_head.obj");
+	Model model("assets/diablo3_pose.obj");
 
 	// camera
 	Camera camera;
@@ -87,7 +87,7 @@ int main(int argc, char** argv)
 	}
 
 	image.flip_vertically();
-	image.write_tga_file("src/outputs/output.tga");
+	image.write_tga_file("outputs/output.tga");
 
 	delete[] zbuffer;
 	return 0;
