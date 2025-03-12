@@ -6,6 +6,12 @@ This project does not rely on any graphics API (e.g. OpenGL / DirectX) and aims 
 
 The implementation of TGA image class and OBJ model parser is based on the [tinyrenderer](https://github.com/ssloy/tinyrenderer) project.
 
+## Installation
+
+Run `build.bat` and build it in Miscrosoft Visual Studio.
+
+## Examples
+
 <img src="./README/diablo_pose.png" alt="Demo" style="zoom: 50%;" />
 
 <img src="./README/african_head.png" alt="Demo" style="zoom: 50%;" />
